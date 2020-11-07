@@ -2,6 +2,7 @@ import time
 from typing import Optional
 from base58 import b58encode
 from secrets import token_bytes
+from hashlib import sha256
 
 # totp time window in seconds
 # would go to a config in a real microservice
@@ -32,7 +33,8 @@ def generate_code(secret: str,
     seconds_since_the_epoch = int(seconds_since_the_epoch // time_window)
 
     # code = str(seconds_since_the_epoch)[-4:]
-    code = str(abs(hash(secret + str(seconds_since_the_epoch))))[:4]
+    hash_object = sha256((str(seconds_since_the_epoch) + secret).encode())
+    code = str(abs(int(hash_object.hexdigest(), 16)))[:4]
     return code
 
 
@@ -54,5 +56,6 @@ def check_code(secret: str, code: str,
     if seconds_since_the_epoch is None:
         seconds_since_the_epoch = int(time.time())
     seconds_since_the_epoch = int(seconds_since_the_epoch // time_window)
-    check_code = str(abs(hash(secret + str(seconds_since_the_epoch))))[:4]
+    hash_object = sha256((str(seconds_since_the_epoch) + secret).encode())
+    check_code = str(abs(int(hash_object.hexdigest(), 16)))[:4]
     return check_code == code
